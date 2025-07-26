@@ -1,0 +1,768 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <link rel="stylesheet" href="css/leaflet.css">
+        <link rel="stylesheet" href="css/L.Control.Layers.Tree.css">
+        <link rel="stylesheet" href="css/L.Control.Locate.min.css">
+        <link rel="stylesheet" href="css/qgis2web.css">
+        <link rel="stylesheet" href="css/fontawesome-all.min.css">
+        <link rel="stylesheet" href="css/leaflet.photon.css">
+        <link rel="stylesheet" href="css/leaflet-measure.css">
+        <style>
+        html, body, #map {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        </style>
+        <title>Santa Apolonia</title>
+    </head>
+    <body>
+        <div id="map">
+        </div>
+        <script src="js/qgis2web_expressions.js"></script>
+        <script src="js/leaflet.js"></script>
+        <script src="js/L.Control.Layers.Tree.min.js"></script>
+        <script src="js/L.Control.Locate.min.js"></script>
+        <script src="js/multi-style-layer.js"></script>
+        <script src="js/leaflet-svg-shape-markers.min.js"></script>
+        <script src="js/leaflet.rotatedMarker.js"></script>
+        <script src="js/leaflet.pattern.js"></script>
+        <script src="js/leaflet-hash.js"></script>
+        <script src="js/Autolinker.min.js"></script>
+        <script src="js/rbush.min.js"></script>
+        <script src="js/labelgun.min.js"></script>
+        <script src="js/labels.js"></script>
+        <script src="js/leaflet.photon.js"></script>
+        <script src="js/leaflet-measure.js"></script>
+        <script src="data/LotesCondicin_2.js"></script>
+        <script src="data/zona_anega_3.js"></script>
+        <script src="data/alumbrado_4.js"></script>
+        <script src="data/incidentes_5.js"></script>
+        <script>
+        var map = L.map('map', {
+            zoomControl:false, maxZoom:28, minZoom:1
+        }).fitBounds([[-24.92620858052917,-65.49302365814903],[-24.922301835704708,-65.48571235876109]]);
+        var hash = new L.Hash(map);
+        map.attributionControl.setPrefix('<a href="https://github.com/tomchadwin/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
+        var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
+        // remove popup's row if "visible-with-data"
+        function removeEmptyRowsFromPopupContent(content, feature) {
+         var tempDiv = document.createElement('div');
+         tempDiv.innerHTML = content;
+         var rows = tempDiv.querySelectorAll('tr');
+         for (var i = 0; i < rows.length; i++) {
+             var td = rows[i].querySelector('td.visible-with-data');
+             var key = td ? td.id : '';
+             if (td && td.classList.contains('visible-with-data') && feature.properties[key] == null) {
+                 rows[i].parentNode.removeChild(rows[i]);
+             }
+         }
+         return tempDiv.innerHTML;
+        }
+        // add class to format popup if it contains media
+		function addClassToPopupIfMedia(content, popup) {
+			var tempDiv = document.createElement('div');
+			tempDiv.innerHTML = content;
+			if (tempDiv.querySelector('td img')) {
+				popup._contentNode.classList.add('media');
+					// Delay to force the redraw
+					setTimeout(function() {
+						popup.update();
+					}, 10);
+			} else {
+				popup._contentNode.classList.remove('media');
+			}
+		}
+        var title = new L.Control({'position':'bottomleft'});
+        title.onAdd = function (map) {
+            this._div = L.DomUtil.create('div', 'info');
+            this.update();
+            return this._div;
+        };
+        title.update = function () {
+            this._div.innerHTML = '<h2>Santa Apolonia</h2>';
+        };
+        title.addTo(map);
+        var abstract = new L.Control({'position':'bottomleft'});
+        abstract.onAdd = function (map) {
+            this._div = L.DomUtil.create('div',
+            'leaflet-control abstract');
+            this._div.id = 'abstract'
+
+                abstract.show();
+                return this._div;
+            };
+            abstract.show = function () {
+                this._div.classList.remove("abstract");
+                this._div.classList.add("abstractUncollapsed");
+                this._div.innerHTML = '<a href="mailto:hernanelena@gmail.com">GeoTechna</a>';
+        };
+        abstract.addTo(map);
+        var zoomControl = L.control.zoom({
+            position: 'topleft'
+        }).addTo(map);
+        L.control.locate({locateOptions: {maxZoom: 19}}).addTo(map);
+        var measureControl = new L.Control.Measure({
+            position: 'topleft',
+            primaryLengthUnit: 'meters',
+            secondaryLengthUnit: 'kilometers',
+            primaryAreaUnit: 'sqmeters',
+            secondaryAreaUnit: 'hectares'
+        });
+        measureControl.addTo(map);
+        document.getElementsByClassName('leaflet-control-measure-toggle')[0].innerHTML = '';
+        document.getElementsByClassName('leaflet-control-measure-toggle')[0].className += ' fas fa-ruler';
+        var bounds_group = new L.featureGroup([]);
+        function setBounds() {
+        }
+        map.createPane('pane_argenmap_0');
+        map.getPane('pane_argenmap_0').style.zIndex = 400;
+        var layer_argenmap_0 = L.tileLayer('https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/capabaseargenmap@EPSG:3857@png/{z}/{x}/{-y}.png', {
+            pane: 'pane_argenmap_0',
+            opacity: 1.0,
+            attribution: '',
+            minZoom: 1,
+            maxZoom: 28,
+            minNativeZoom: 0,
+            maxNativeZoom: 18
+        });
+        layer_argenmap_0;
+        map.addLayer(layer_argenmap_0);
+        map.createPane('pane_GoogleSatellite_1');
+        map.getPane('pane_GoogleSatellite_1').style.zIndex = 401;
+        var layer_GoogleSatellite_1 = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+            pane: 'pane_GoogleSatellite_1',
+            opacity: 1.0,
+            attribution: '<a href="https://www.google.at/permissions/geoguidelines/attr-guide.html">Map data ©2015 Google</a>',
+            minZoom: 1,
+            maxZoom: 28,
+            minNativeZoom: 0,
+            maxNativeZoom: 20
+        });
+        layer_GoogleSatellite_1;
+        function pop_LotesCondicin_2(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <th scope="row">Nro Catastro</th>\
+                        <td>' + (feature.properties['CATASTRO'] !== null ? autolinker.link(String(feature.properties['CATASTRO']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['SECCION'] !== null ? autolinker.link(String(feature.properties['SECCION']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="NRO_MANZAN" colspan="2"><strong>Manzana</strong><br />' + (feature.properties['NRO_MANZAN'] !== null ? autolinker.link(String(feature.properties['NRO_MANZAN']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['LET_MANZAN'] !== null ? autolinker.link(String(feature.properties['LET_MANZAN']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Parcela</th>\
+                        <td>' + (feature.properties['NRO_PARCEL'] !== null ? autolinker.link(String(feature.properties['NRO_PARCEL']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">LET_PARCEL</th>\
+                        <td>' + (feature.properties['LET_PARCEL'] !== null ? autolinker.link(String(feature.properties['LET_PARCEL']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">VINCULACIO</th>\
+                        <td>' + (feature.properties['VINCULACIO'] !== null ? autolinker.link(String(feature.properties['VINCULACIO']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">COD_MANZAN</th>\
+                        <td>' + (feature.properties['COD_MANZAN'] !== null ? autolinker.link(String(feature.properties['COD_MANZAN']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Plano</th>\
+                        <td>' + (feature.properties['PLANO'] !== null ? autolinker.link(String(feature.properties['PLANO']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Categoria</th>\
+                        <td>' + (feature.properties['CATEGORIA'] !== null ? autolinker.link(String(feature.properties['CATEGORIA']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="categori_1" colspan="2"><strong>categori_1</strong><br />' + (feature.properties['categori_1'] !== null ? autolinker.link(String(feature.properties['categori_1']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Propietario</th>\
+                        <td class="visible-with-data" id="propietari">' + (feature.properties['propietari'] !== null ? autolinker.link(String(feature.properties['propietari']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Condicion</th>\
+                        <td>' + (feature.properties['Condicion'] !== null ? autolinker.link(String(feature.properties['Condicion']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Lote Nro.</th>\
+                        <td>' + (feature.properties['lote'] !== null ? autolinker.link(String(feature.properties['lote']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_LotesCondicin_2_0(feature) {
+            switch(String(feature.properties['Condicion'])) {
+                case 'Area Basura':
+                    return {
+                pane: 'pane_LotesCondicin_2',
+                opacity: 1,
+                color: 'rgba(255,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(51,231,150,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'En Obra':
+                    return {
+                pane: 'pane_LotesCondicin_2',
+                opacity: 1,
+                color: 'rgba(255,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(193,15,237,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'Eventual':
+                    return {
+                pane: 'pane_LotesCondicin_2',
+                opacity: 1,
+                color: 'rgba(255,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(54,219,13,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'Obra sin terminar':
+                    return {
+                pane: 'pane_LotesCondicin_2',
+                opacity: 1,
+                color: 'rgba(255,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(231,107,58,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'Permanente':
+                    return {
+                pane: 'pane_LotesCondicin_2',
+                opacity: 1,
+                color: 'rgba(255,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(195,200,57,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'Temporario':
+                    return {
+                pane: 'pane_LotesCondicin_2',
+                opacity: 1,
+                color: 'rgba(255,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(61,179,230,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'Terreno':
+                    return {
+                pane: 'pane_LotesCondicin_2',
+                opacity: 1,
+                color: 'rgba(255,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(45,36,222,1.0)',
+                interactive: true,
+            }
+                    break;
+                default:
+                    return {
+                pane: 'pane_LotesCondicin_2',
+                opacity: 1,
+                color: 'rgba(255,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(238,143,187,1.0)',
+                interactive: true,
+            }
+                    break;
+            }
+        }
+        map.createPane('pane_LotesCondicin_2');
+        map.getPane('pane_LotesCondicin_2').style.zIndex = 402;
+        map.getPane('pane_LotesCondicin_2').style['mix-blend-mode'] = 'normal';
+        var layer_LotesCondicin_2 = new L.geoJson(json_LotesCondicin_2, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_LotesCondicin_2',
+            layerName: 'layer_LotesCondicin_2',
+            pane: 'pane_LotesCondicin_2',
+            onEachFeature: pop_LotesCondicin_2,
+            style: style_LotesCondicin_2_0,
+        });
+        bounds_group.addLayer(layer_LotesCondicin_2);
+        map.addLayer(layer_LotesCondicin_2);
+        function pop_zona_anega_3(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['id'] !== null ? autolinker.link(String(feature.properties['id']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_zona_anega_3_0() {
+            return {
+                pane: 'pane_zona_anega_3',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(225,89,137,1.0)',
+                interactive: false,
+            }
+        }
+        map.createPane('pane_zona_anega_3');
+        map.getPane('pane_zona_anega_3').style.zIndex = 403;
+        map.getPane('pane_zona_anega_3').style['mix-blend-mode'] = 'normal';
+        var layer_zona_anega_3 = new L.geoJson(json_zona_anega_3, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_zona_anega_3',
+            layerName: 'layer_zona_anega_3',
+            pane: 'pane_zona_anega_3',
+            onEachFeature: pop_zona_anega_3,
+            style: style_zona_anega_3_0,
+        });
+        bounds_group.addLayer(layer_zona_anega_3);
+        map.addLayer(layer_zona_anega_3);
+        function pop_alumbrado_4(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Name'] !== null ? autolinker.link(String(feature.properties['Name']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Descripci_'] !== null ? autolinker.link(String(feature.properties['Descripci_']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_alumbrado_4_0() {
+            return {
+                pane: 'pane_alumbrado_4',
+        rotationAngle: 0.02617995,
+        rotationOrigin: 'center center',
+        icon: L.icon({
+            iconUrl: 'markers/alumbrado_4.svg',
+            iconSize: [26.599999999999998, 26.599999999999998]
+        }),
+                interactive: true,
+            }
+        }
+        map.createPane('pane_alumbrado_4');
+        map.getPane('pane_alumbrado_4').style.zIndex = 404;
+        map.getPane('pane_alumbrado_4').style['mix-blend-mode'] = 'normal';
+        var layer_alumbrado_4 = new L.geoJson(json_alumbrado_4, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_alumbrado_4',
+            layerName: 'layer_alumbrado_4',
+            pane: 'pane_alumbrado_4',
+            onEachFeature: pop_alumbrado_4,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.marker(latlng, style_alumbrado_4_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_alumbrado_4);
+        map.addLayer(layer_alumbrado_4);
+        function pop_incidentes_5(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <th scope="row">Name</th>\
+                        <td>' + (feature.properties['Name'] !== null ? autolinker.link(String(feature.properties['Name']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">descriptio</th>\
+                        <td>' + (feature.properties['descriptio'] !== null ? autolinker.link(String(feature.properties['descriptio']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Fecha</th>\
+                        <td>' + (feature.properties['Fecha'] !== null ? autolinker.link(String(feature.properties['Fecha']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['tipo'] !== null ? autolinker.link(String(feature.properties['tipo']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_incidentes_5_0(feature) {
+            switch(String(feature.properties['tipo'])) {
+                case 'Ambiental':
+                    return {
+                pane: 'pane_incidentes_5',
+                radius: 13.2,
+                opacity: 1,
+                color: 'rgba(0,115,8,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(47,244,0,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'Mascotas':
+                    return {
+                pane: 'pane_incidentes_5',
+                radius: 13.2,
+                opacity: 1,
+                color: 'rgba(95,50,8,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(170,107,76,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'Perimetro':
+                    return {
+                pane: 'pane_incidentes_5',
+                radius: 13.2,
+                opacity: 1,
+                color: 'rgba(101,144,8,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(101,239,205,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'Vecinos':
+                    return {
+                pane: 'pane_incidentes_5',
+                radius: 13.2,
+                opacity: 1,
+                color: 'rgba(184,8,8,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(255,6,25,1.0)',
+                interactive: true,
+            }
+                    break;
+                default:
+                    return {
+                pane: 'pane_incidentes_5',
+                radius: 13.2,
+                opacity: 1,
+                color: 'rgba(184,8,8,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(110,234,76,1.0)',
+                interactive: true,
+            }
+                    break;
+            }
+        }
+        function style_incidentes_5_1(feature) {
+            switch(String(feature.properties['tipo'])) {
+                case 'Ambiental':
+                    return {
+                pane: 'pane_incidentes_5',
+                radius: 14.4,
+                opacity: 1,
+                color: 'rgba(41,112,0,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(133,255,158,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'Mascotas':
+                    return {
+                pane: 'pane_incidentes_5',
+                radius: 14.4,
+                opacity: 1,
+                color: 'rgba(93,84,0,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(176,130,67,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'Perimetro':
+                    return {
+                pane: 'pane_incidentes_5',
+                radius: 14.4,
+                opacity: 1,
+                color: 'rgba(89,134,94,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(117,236,205,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'Vecinos':
+                    return {
+                pane: 'pane_incidentes_5',
+                radius: 14.4,
+                opacity: 1,
+                color: 'rgba(255,0,0,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(255,6,25,1.0)',
+                interactive: true,
+            }
+                    break;
+                default:
+                    return {
+                pane: 'pane_incidentes_5',
+                radius: 14.4,
+                opacity: 1,
+                color: 'rgba(255,0,0,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(110,234,76,1.0)',
+                interactive: true,
+            }
+                    break;
+            }
+        }
+        map.createPane('pane_incidentes_5');
+        map.getPane('pane_incidentes_5').style.zIndex = 405;
+        map.getPane('pane_incidentes_5').style['mix-blend-mode'] = 'normal';
+        var layer_incidentes_5 = new L.geoJson.multiStyle(json_incidentes_5, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_incidentes_5',
+            layerName: 'layer_incidentes_5',
+            pane: 'pane_incidentes_5',
+            onEachFeature: pop_incidentes_5,
+            pointToLayers: [function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.shapeMarker(latlng, style_incidentes_5_0(feature));
+            },function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.shapeMarker(latlng, style_incidentes_5_1(feature));
+            },
+        ]});
+        bounds_group.addLayer(layer_incidentes_5);
+        map.addLayer(layer_incidentes_5);
+        const url = {"Nominatim": "https://nominatim.openstreetmap.org/search?format=geojson&addressdetails=1&",
+        "BAN": "https://api-adresse.data.gouv.fr/search/?"}
+        var photonControl = L.control.photon({
+            url: url["Nominatim"],
+            feedbackLabel: '',
+            position: 'topleft',
+            includePosition: true,
+            initial: true,
+            // resultsHandler: myHandler,
+        }).addTo(map);
+        photonControl._container.childNodes[0].style.borderRadius="10px"
+        // Create a variable to store the geoJSON data
+        var x = null;
+        // Create a variable to store the marker
+        var marker = null;
+        // Add an event listener to the Photon control to create a marker from the returned geoJSON data
+        var z = null;
+        photonControl.on('selected', function(e) {
+            console.log(photonControl.search.resultsContainer);
+            if (x != null) {
+                map.removeLayer(obj3.marker);
+                map.removeLayer(x);
+            }
+            obj2.gcd = e.choice;
+            x = L.geoJSON(obj2.gcd).addTo(map);
+            var label = typeof obj2.gcd.properties.label === 'undefined' ? obj2.gcd.properties.display_name : obj2.gcd.properties.label;
+            obj3.marker = L.marker(x.getLayers()[0].getLatLng()).bindPopup(label).addTo(map);
+            map.setView(x.getLayers()[0].getLatLng(), 17);
+            z = typeof e.choice.properties.label === 'undefined'? e.choice.properties.display_name : e.choice.properties.label;
+            console.log(e);
+            e.target.input.value = z;
+        });
+        var search = document.getElementsByClassName("leaflet-photon leaflet-control")[0];
+        search.classList.add("leaflet-control-search")
+        search.style.display = "flex";
+        search.style.backgroundColor="rgba(255,255,255,0.5)" 
+
+        // Créer le nouvel élément bouton
+        var button = document.createElement("div");
+        button.id = "gcd-button-control";
+        button.className = "gcd-gl-btn fa fa-search search-button";
+
+        // Ajouter le bouton à l'élément parent
+        search.insertBefore(button, search.firstChild);
+        last = search.lastChild;
+        last.style.display = "none";
+        button.addEventListener("click", function (e) {
+            if (last.style.display === "none") {
+                last.style.display = "block";
+            } else {
+                last.style.display = "none";
+            }
+        });
+        var overlaysTree = [
+            {label: 'incidentes<br /><table><tr><td style="text-align: center;"><img src="legend/incidentes_5_Ambiental0.png" /></td><td>Ambiental</td></tr><tr><td style="text-align: center;"><img src="legend/incidentes_5_Mascotas1.png" /></td><td>Mascotas</td></tr><tr><td style="text-align: center;"><img src="legend/incidentes_5_Perimetro2.png" /></td><td>Perimetro</td></tr><tr><td style="text-align: center;"><img src="legend/incidentes_5_Vecinos3.png" /></td><td>Vecinos</td></tr><tr><td style="text-align: center;"><img src="legend/incidentes_5_4.png" /></td><td></td></tr></table>', layer: layer_incidentes_5},
+            {label: '<img src="legend/alumbrado_4.png" /> alumbrado', layer: layer_alumbrado_4},
+            {label: '<img src="legend/zona_anega_3.png" /> zona_anega', layer: layer_zona_anega_3},
+            {label: 'Lotes - Condición<br /><table><tr><td style="text-align: center;"><img src="legend/LotesCondicin_2_AreaBasura0.png" /></td><td>Area Basura</td></tr><tr><td style="text-align: center;"><img src="legend/LotesCondicin_2_EnObra1.png" /></td><td>En Obra</td></tr><tr><td style="text-align: center;"><img src="legend/LotesCondicin_2_Eventual2.png" /></td><td>Eventual</td></tr><tr><td style="text-align: center;"><img src="legend/LotesCondicin_2_Obrasinterminar3.png" /></td><td>Obra sin terminar</td></tr><tr><td style="text-align: center;"><img src="legend/LotesCondicin_2_Permanente4.png" /></td><td>Permanente</td></tr><tr><td style="text-align: center;"><img src="legend/LotesCondicin_2_Temporario5.png" /></td><td>Temporario</td></tr><tr><td style="text-align: center;"><img src="legend/LotesCondicin_2_Terreno6.png" /></td><td>Terreno</td></tr><tr><td style="text-align: center;"><img src="legend/LotesCondicin_2_7.png" /></td><td></td></tr></table>', layer: layer_LotesCondicin_2},
+            {label: "Google Satellite", layer: layer_GoogleSatellite_1, radioGroup: 'bm' },
+            {label: "argenmap", layer: layer_argenmap_0, radioGroup: 'bm' },]
+        var lay = L.control.layers.tree(null, overlaysTree,{
+            //namedToggle: true,
+            //selectorBack: false,
+            //closedSymbol: '&#8862; &#x1f5c0;',
+            //openedSymbol: '&#8863; &#x1f5c1;',
+            //collapseAll: 'Collapse all',
+            //expandAll: 'Expand all',
+            collapsed: true,
+        });
+        lay.addTo(map);
+        setBounds();
+        var i = 0;
+        layer_LotesCondicin_2.eachLayer(function(layer) {
+            var context = {
+                feature: layer.feature,
+                variables: {}
+            };
+            layer.bindTooltip((layer.feature.properties['lote'] !== null?String('<div style="color: #323232; font-size: 10pt; font-family: \'Open Sans\', sans-serif;">' + layer.feature.properties['lote']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_LotesCondicin_2'});
+            labels.push(layer);
+            totalMarkers += 1;
+              layer.added = true;
+              addLabel(layer, i);
+              i++;
+        });
+        var i = 0;
+        layer_alumbrado_4.eachLayer(function(layer) {
+            var context = {
+                feature: layer.feature,
+                variables: {}
+            };
+            layer.bindTooltip((layer.feature.properties['Name'] !== null?String('<div style="color: #323232; font-size: 10pt; font-family: \'Open Sans\', sans-serif;">' + layer.feature.properties['Name']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_alumbrado_4'});
+            labels.push(layer);
+            totalMarkers += 1;
+              layer.added = true;
+              addLabel(layer, i);
+              i++;
+        });
+        resetLabels([layer_LotesCondicin_2,layer_alumbrado_4]);
+        map.on("zoomend", function(){
+            resetLabels([layer_LotesCondicin_2,layer_alumbrado_4]);
+        });
+        map.on("layeradd", function(){
+            resetLabels([layer_LotesCondicin_2,layer_alumbrado_4]);
+        });
+        map.on("layerremove", function(){
+            resetLabels([layer_LotesCondicin_2,layer_alumbrado_4]);
+        });
+        </script>
+    </body>
+</html>
